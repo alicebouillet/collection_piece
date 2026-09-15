@@ -1,0 +1,23 @@
+# Environnement
+.env
+.env.local
+*.env
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Node
+node_modules/
+dist/
+.vite/
+
+# Données récupérées (volumineuses, régénérables via scrape_ecb.py)
+data/images/
+data/catalog.json
+
+# Système
+.DS_Store
+Thumbs.db
