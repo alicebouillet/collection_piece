@@ -442,6 +442,21 @@ button {
   font-weight: 600;
 }
 
+.connexion .lien {
+  width: auto;
+  background: none;
+  color: var(--estompe);
+  font-size: 13px;
+  font-weight: 400;
+  text-decoration: underline;
+  padding: 10px;
+  margin-top: 4px;
+}
+
+.connexion .lien:hover {
+  color: var(--parchemin);
+}
+
 .credit {
   margin-top: 54px;
   font-size: 12px;
