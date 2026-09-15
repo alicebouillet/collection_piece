@@ -42,36 +42,11 @@ export function modelePret() {
   return chargement !== null
 }
 
-/**
- * Isole le disque de la pièce et renvoie un canvas carré sur fond noir.
- *
- * Le fond d'une photo prise à la main est du bruit pur pour le modèle.
- * Faute de détection de cercle en JS, on recadre au carré centré : la
- * consigne donnée à l'utilisateur est de cadrer la pièce seule et centrée,
- * ce qui suffit en pratique.
- */
-async function preparer(fichier) {
-  const bitmap = await createImageBitmap(fichier)
-  const cote = Math.min(bitmap.width, bitmap.height)
-  const gauche = (bitmap.width - cote) / 2
-  const haut = (bitmap.height - cote) / 2
-
-  const canvas = document.createElement('canvas')
-  canvas.width = 224
-  canvas.height = 224
-  const ctx = canvas.getContext('2d')
-  ctx.drawImage(bitmap, gauche, haut, cote, cote, 0, 0, 224, 224)
-  bitmap.close()
-
-  return canvas
-}
-
 /** Vecteur CLIP normalisé, comparable par cosinus à ceux stockés en base. */
-async function vectoriser(fichier, onProgres) {
+async function vectoriser(canvas, onProgres) {
   const { processor, model } = await charger(onProgres)
 
   const { RawImage } = await import('@huggingface/transformers')
-  const canvas = await preparer(fichier)
   const image = await RawImage.fromCanvas(canvas)
   const entrees = await processor(image)
   const { image_embeds } = await model(entrees)
@@ -84,12 +59,12 @@ async function vectoriser(fichier, onProgres) {
 /**
  * Identifie une pièce et renvoie les candidats les plus proches.
  *
- * `valeur` est en centimes. Elle est indispensable : plusieurs pays gravent
+ * `canvas` est l'image déjà détourée. `valeur` est en centimes. Elle est indispensable : plusieurs pays gravent
  * le même motif sur 1, 2 et 5 centimes, et seul le diamètre les distingue —
  * donnée qu'une photo ne porte pas.
  */
-export async function identifier(fichier, valeur, onProgres) {
-  const vecteur = await vectoriser(fichier, onProgres)
+export async function identifier(canvas, valeur, onProgres) {
+  const vecteur = await vectoriser(canvas, onProgres)
 
   const { data, error } = await supabase.rpc('match_coins', {
     query_embedding: vecteur,
@@ -102,6 +77,9 @@ export async function identifier(fichier, valeur, onProgres) {
   const candidats = data ?? []
   return {
     candidats,
+    // Le canvas analysé est renvoyé pour affichage : voir ce que le modèle
+    // a réellement vu explique la plupart des mauvaises reconnaissances.
+    apercu: canvas.toDataURL('image/jpeg', 0.8),
     // En dessous de ce seuil, la ressemblance est trop faible pour qu'une
     // proposition ait du sens : l'interface bascule sur la saisie manuelle.
     fiable: candidats.length > 0 && candidats[0].score >= 0.8,

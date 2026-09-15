@@ -1,9 +1,13 @@
 import { useRef, useState } from 'react'
 import { VALEURS, libelleValeur } from '../valeurs'
+import { preparer } from '../detourage'
+import Recadrage from './Recadrage'
 
 export default function PanneauIdentification({ onFermer, onAjouter }) {
   const [valeur, setValeur] = useState(null)
-  const [etat, setEtat] = useState('valeur') // valeur | attente | analyse | resultats | erreur
+  // valeur | attente | recadrage | analyse | resultats | erreur
+  const [etat, setEtat] = useState('valeur')
+  const [photo, setPhoto] = useState(null)
   const [resultat, setResultat] = useState(null)
   const [message, setMessage] = useState(null)
   const [progres, setProgres] = useState(null)
@@ -29,17 +33,29 @@ export default function PanneauIdentification({ onFermer, onAjouter }) {
     }
   }
 
-  async function analyser(e) {
+  /** Décode la photo et propose un cercle, sans encore lancer le modèle. */
+  async function recevoirPhoto(e) {
     const fichier = e.target.files?.[0]
     if (!fichier) return
+    e.target.value = '' // pour pouvoir reprendre deux fois la même photo
 
+    try {
+      setPhoto(await preparer(fichier))
+      setEtat('recadrage')
+    } catch {
+      setMessage("Cette image n'a pas pu être lue. Réessaie.")
+      setEtat('erreur')
+    }
+  }
+
+  async function analyser(canvas) {
     setEtat('analyse')
     const { modelePret } = await chargerModule()
     setProgres(modelePret() ? null : 0)
 
     try {
       const { identifier } = await chargerModule()
-      const reponse = await identifier(fichier, valeur, suivreTelechargement)
+      const reponse = await identifier(canvas, valeur, suivreTelechargement)
       setResultat(reponse)
       setEtat('resultats')
     } catch (err) {
@@ -60,7 +76,7 @@ export default function PanneauIdentification({ onFermer, onAjouter }) {
           type="file"
           accept="image/*"
           capture="environment"
-          onChange={analyser}
+          onChange={recevoirPhoto}
           hidden
         />
 
@@ -84,8 +100,9 @@ export default function PanneauIdentification({ onFermer, onAjouter }) {
         {etat === 'attente' && (
           <>
             <p className="panneau-aide">
-              Photographie la face nationale, pièce bien à plat et centrée dans
-              le cadre.
+              Pose la pièce sur une surface claire, bien éclairée, et cadre-la
+              seule. La reconnaissance compare à des images sur fond blanc :
+              plus tu t'en approches, plus elle est sûre.
             </p>
             <button className="secondaire" onClick={() => champ.current.click()}>
               Prendre une photo
@@ -94,6 +111,17 @@ export default function PanneauIdentification({ onFermer, onAjouter }) {
               Changer de valeur ({libelleValeur(valeur)})
             </button>
           </>
+        )}
+
+        {etat === 'recadrage' && photo && (
+          <Recadrage
+            photo={photo}
+            onValider={analyser}
+            onReprendre={() => {
+              setEtat('attente')
+              setTimeout(() => champ.current?.click(), 0)
+            }}
+          />
         )}
 
         {etat === 'analyse' && (
@@ -128,6 +156,15 @@ export default function PanneauIdentification({ onFermer, onAjouter }) {
                 : "Aucune correspondance nette. Vérifie ces propositions, ou cherche la pièce dans l'album."}
             </p>
 
+            <div className="apercu">
+              <img src={resultat.apercu} alt="Ce que la reconnaissance a analysé" />
+              <p>
+                {resultat.detecte
+                  ? 'Pièce détectée et détourée.'
+                  : "Contour non détecté : cadrage centré utilisé. Réessaie sur un fond uni et clair."}
+              </p>
+            </div>
+
             {resultat.candidats.map((c) => (
               <button key={c.id} className="candidat" onClick={() => onAjouter(c)}>
                 <img src={`${import.meta.env.BASE_URL}${c.image_url}`} alt="" />
@@ -147,6 +184,9 @@ export default function PanneauIdentification({ onFermer, onAjouter }) {
               </button>
             ))}
 
+            <button className="secondaire" onClick={() => setEtat('recadrage')}>
+              Ajuster le cadrage
+            </button>
             <button className="secondaire" onClick={() => setEtat('valeur')}>
               Reprendre une photo
             </button>

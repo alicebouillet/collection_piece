@@ -92,7 +92,7 @@ export default function App() {
   return (
     <div className="shell">
       <header className="masthead">
-        <h1>Ma collection de 2 euros</h1>
+        <h1>Ma collection de pièces</h1>
         <p>{session.user.email}</p>
       </header>
 
