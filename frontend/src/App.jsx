@@ -25,9 +25,9 @@ export default function App() {
     const { data, error } = await supabase
       .from('vue_catalogue')
       .select('*')
+      .order('pays', { ascending: true })
       .order('valeur', { ascending: true })
       .order('annee', { ascending: true, nullsFirst: true })
-      .order('pays', { ascending: true })
 
     if (error) setErreur("Le catalogue n'a pas pu être chargé. Vérifie ta connexion.")
     else {

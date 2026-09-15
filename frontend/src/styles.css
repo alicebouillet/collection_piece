@@ -8,17 +8,17 @@
    ========================================================================= */
 
 :root {
-  --feutre: #1c2b2a;
-  --feutre-creux: #14201f;
+  --feutre: #33483f;
+  --feutre-creux: #24352f;
   --laiton: #c39a4b;
   --nickel: #cbd2d3;
   --parchemin: #eae4d6;
-  --estompe: #8a9a96;
+  --estompe: #9fb0aa;
 
   --serif: 'Newsreader', Georgia, serif;
   --sans: 'Inter', system-ui, sans-serif;
 
-  --logement: 84px;
+  --logement: 130px;
 }
 
 * {
@@ -55,7 +55,7 @@ button {
 /* ------------------------------------------------------------------ mise en page */
 
 .shell {
-  max-width: 940px;
+  max-width: 1180px;
   margin: 0 auto;
   padding: 28px 18px 80px;
 }
@@ -87,7 +87,45 @@ button {
 /* ---------------------------------------------------------------- avancement */
 
 .avancement {
-  margin: 22px 0 26px;
+  margin: 22px 0 28px;
+}
+
+.avancement-chiffre {
+  margin: 0 0 10px;
+  font-size: 14px;
+  color: var(--estompe);
+}
+
+.avancement-chiffre strong {
+  font-family: var(--serif);
+  font-size: 30px;
+  font-weight: 400;
+  color: var(--parchemin);
+  margin-right: 6px;
+}
+
+.avancement-detail {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 30px;
+  margin: 12px 0 0;
+}
+
+.avancement-detail div {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+}
+
+.avancement-detail dt {
+  font-size: 13px;
+  color: var(--estompe);
+}
+
+.avancement-detail dd {
+  margin: 0;
+  font-family: var(--serif);
+  font-size: 15px;
 }
 
 .avancement-ligne {
@@ -101,17 +139,6 @@ button {
   height: 100%;
   background: var(--laiton);
   transition: width 400ms ease;
-}
-
-.avancement-texte {
-  margin: 9px 0 0;
-  font-size: 13px;
-  color: var(--estompe);
-}
-
-.avancement-texte strong {
-  color: var(--parchemin);
-  font-weight: 500;
 }
 
 /* ------------------------------------------------------------------- filtres */
@@ -146,9 +173,46 @@ button {
 /* --------------------------------------------------------------------- album */
 
 .album {
+  display: flex;
+  flex-direction: column;
+  gap: 34px;
+}
+
+.pays-section {
+  scroll-margin-top: 16px;
+}
+
+.pays-entete {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid rgba(195, 154, 75, 0.22);
+  padding-bottom: 7px;
+  margin-bottom: 18px;
+}
+
+.pays-entete h2 {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: 21px;
+  margin: 0;
+}
+
+.pays-compte {
+  font-size: 13px;
+  color: var(--estompe);
+}
+
+.pays-complet {
+  font-size: 13px;
+  color: var(--laiton);
+}
+
+.pays-grille {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(var(--logement), 1fr));
-  gap: 22px 16px;
+  gap: 26px 18px;
 }
 
 .piece {
@@ -205,16 +269,15 @@ button {
     inset 0 1px 3px rgba(0, 0, 0, 0.4);
 }
 
+/* Le pays est déjà en titre de section : la légende ne répète que la valeur. */
 .piece-pays {
-  font-size: 13px;
-  font-weight: 500;
-  line-height: 1.25;
+  display: none;
 }
 
 .piece-annee {
   font-family: var(--serif);
-  font-size: 13px;
-  color: var(--estompe);
+  font-size: 14px;
+  color: var(--parchemin);
 }
 
 .piece-quantite {
@@ -390,14 +453,14 @@ button {
 
 /* Le logement suit le diamètre réel de la pièce, comme dans un album :
    une rangée de 1 centime ne peut pas occuper la place d'une 2 euros. */
-.logement--v1   { width: 60px; height: 60px; }
-.logement--v2   { width: 66px; height: 66px; }
-.logement--v5   { width: 72px; height: 72px; }
-.logement--v10  { width: 70px; height: 70px; }
-.logement--v20  { width: 76px; height: 76px; }
-.logement--v50  { width: 82px; height: 82px; }
-.logement--v100 { width: 78px; height: 78px; }
-.logement--v200 { width: 84px; height: 84px; }
+.logement--v1   { width: 92px;  height: 92px; }
+.logement--v2   { width: 102px; height: 102px; }
+.logement--v5   { width: 111px; height: 111px; }
+.logement--v10  { width: 108px; height: 108px; }
+.logement--v20  { width: 117px; height: 117px; }
+.logement--v50  { width: 126px; height: 126px; }
+.logement--v100 { width: 120px; height: 120px; }
+.logement--v200 { width: 130px; height: 130px; }
 
 .choix-valeur {
   display: grid;
