@@ -37,9 +37,19 @@ def health():
 
 
 @app.post("/identify")
-async def identify(photo: UploadFile = File(...), top_k: int = 3):
+async def identify(
+    photo: UploadFile = File(...),
+    top_k: int = 3,
+    valeur: int | None = None,
+):
     """
     Renvoie les `top_k` types de pièces les plus proches de la photo.
+
+    `valeur` restreint la recherche à une valeur faciale, en centimes. Elle
+    est indispensable en pratique : plusieurs pays emploient le même dessin
+    pour 1, 2 et 5 centimes, et seul le diamètre les distingue — donnée qu'une
+    photo ne porte pas. L'utilisateur choisit la valeur, le modèle fait le
+    reste.
 
     Le résultat est une proposition, pas un verdict : c'est l'utilisateur qui
     confirme dans l'interface. Avec une seule image de référence par type et
@@ -59,7 +69,11 @@ async def identify(photo: UploadFile = File(...), top_k: int = 3):
 
     response = supabase.rpc(
         "match_coins",
-        {"query_embedding": vector, "match_count": max(1, min(top_k, 10))},
+        {
+            "query_embedding": vector,
+            "match_count": max(1, min(top_k, 10)),
+            "filtre_valeur": valeur,
+        },
     ).execute()
 
     candidates = response.data or []

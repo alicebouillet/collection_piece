@@ -1,8 +1,9 @@
 # Collection de 2 euros
 
-Application personnelle pour suivre une collection de pièces de 2 euros :
-catalogue complet des faces nationales et des commémoratives, marquage de ce
-qu'on possède, et identification d'une pièce à partir d'une photo.
+Application personnelle pour suivre une collection de pièces en euros : les
+huit valeurs faciales de 1 centime à 2 euros, faces nationales et
+commémoratives, marquage de ce qu'on possède, et identification d'une pièce à
+partir d'une photo.
 
 ## Comment c'est construit
 
@@ -19,6 +20,13 @@ commémoratives, une recherche de similarité donne de meilleurs résultats qu'u
 modèle réentraîné, et se met à jour en ajoutant simplement une ligne en base.
 
 ## Deux points de modélisation
+
+**La valeur faciale ne se devine pas sur une photo.** Beaucoup de pays gravent
+le même motif sur 1, 2 et 5 centimes, et un autre motif commun sur 10, 20 et
+50. Seuls le diamètre et la couleur les séparent, et le diamètre n'est pas
+récupérable sans référence d'échelle. L'utilisateur choisit donc la valeur d'un
+tap avant de photographier, ce qui restreint la recherche à une vingtaine de
+types au lieu de sept cents.
 
 **Une pièce courante n'a pas d'année.** Le motif de la face nationale est
 identique d'une année sur l'autre : aucun modèle ne peut distinguer un exemplaire
@@ -42,13 +50,16 @@ Authentication, activer la connexion par lien magique.
 ```bash
 cd data
 pip install -r requirements.txt
-python scrape_ecb.py --inspect 2015      # vérifier la structure des pages
-python scrape_ecb.py --national --comm   # récupérer images + catalog.json
+python scrape_ecb.py --inspect 2015        # vérifier la structure des pages
+python scrape_ecb.py --inspect courantes   # idem pour les faces nationales
+python scrape_ecb.py --courantes --comm    # récupérer images + catalog.json
 ```
 
 Le mode `--inspect` affiche les premières images d'une page avec leur contexte :
 à lancer avant le scraping complet, et à relancer sur une année ancienne et une
 année récente pour confirmer que la convention de nommage n'a pas changé.
+Compter 25 à 35 minutes : huit pages de faces nationales et une vingtaine
+d'années de commémoratives, avec une pause d'une seconde entre chaque requête.
 
 ### 3. Import en base
 

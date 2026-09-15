@@ -1,11 +1,21 @@
 import { useRef, useState } from 'react'
 import { identifier } from '../api'
+import { VALEURS, libelleValeur } from '../valeurs'
 
 export default function PanneauIdentification({ onFermer, onAjouter }) {
-  const [etat, setEtat] = useState('attente') // attente | analyse | resultats | erreur
+  const [valeur, setValeur] = useState(null)
+  const [etat, setEtat] = useState('valeur') // valeur | attente | analyse | resultats | erreur
   const [resultat, setResultat] = useState(null)
   const [message, setMessage] = useState(null)
   const champ = useRef(null)
+
+  function choisir(centimes) {
+    setValeur(centimes)
+    setEtat('attente')
+    // Le sélecteur de fichier doit s'ouvrir dans le même geste que le tap,
+    // sinon les navigateurs mobiles bloquent l'accès à l'appareil photo.
+    setTimeout(() => champ.current?.click(), 0)
+  }
 
   async function analyser(e) {
     const fichier = e.target.files?.[0]
@@ -13,7 +23,7 @@ export default function PanneauIdentification({ onFermer, onAjouter }) {
 
     setEtat('analyse')
     try {
-      const reponse = await identifier(fichier)
+      const reponse = await identifier(fichier, valeur)
       setResultat(reponse)
       setEtat('resultats')
     } catch (err) {
@@ -26,9 +36,6 @@ export default function PanneauIdentification({ onFermer, onAjouter }) {
     <div className="panneau" onClick={onFermer}>
       <div className="panneau-contenu" onClick={(e) => e.stopPropagation()}>
         <h2>Identifier une pièce</h2>
-        <p className="panneau-aide">
-          Photographie la face nationale, pièce bien à plat et cadrée seule.
-        </p>
 
         <input
           ref={champ}
@@ -39,10 +46,35 @@ export default function PanneauIdentification({ onFermer, onAjouter }) {
           hidden
         />
 
+        {etat === 'valeur' && (
+          <>
+            <p className="panneau-aide">
+              Quelle valeur ? Plusieurs pays gravent le même motif sur 1, 2 et
+              5 centimes, alors seule la taille les sépare — et une photo ne la
+              donne pas.
+            </p>
+            <div className="choix-valeur">
+              {VALEURS.map((v) => (
+                <button key={v.centimes} onClick={() => choisir(v.centimes)}>
+                  {v.libelle}
+                </button>
+              ))}
+            </div>
+          </>
+        )}
+
         {etat === 'attente' && (
-          <button className="secondaire" onClick={() => champ.current.click()}>
-            Prendre une photo
-          </button>
+          <>
+            <p className="panneau-aide">
+              Photographie la face nationale, pièce bien à plat et cadrée seule.
+            </p>
+            <button className="secondaire" onClick={() => champ.current.click()}>
+              Prendre une photo
+            </button>
+            <button className="secondaire" onClick={() => setEtat('valeur')}>
+              Changer de valeur ({libelleValeur(valeur)})
+            </button>
+          </>
         )}
 
         {etat === 'analyse' && <p className="panneau-aide">Analyse de la photo.</p>}
@@ -66,9 +98,11 @@ export default function PanneauIdentification({ onFermer, onAjouter }) {
 
             {resultat.candidats.map((c) => (
               <button key={c.id} className="candidat" onClick={() => onAjouter(c)}>
-                <img src={c.image_url} alt="" />
+                <img src={`${import.meta.env.BASE_URL}${c.image_url}`} alt="" />
                 <span>
-                  <span className="candidat-nom">{c.pays}</span>
+                  <span className="candidat-nom">
+                    {c.pays} · {libelleValeur(c.valeur)}
+                  </span>
                   <br />
                   <span className="candidat-detail">
                     {c.annee ? `${c.annee} — ${c.theme ?? 'commémorative'}` : 'pièce courante'}
@@ -81,7 +115,7 @@ export default function PanneauIdentification({ onFermer, onAjouter }) {
               </button>
             ))}
 
-            <button className="secondaire" onClick={() => setEtat('attente')}>
+            <button className="secondaire" onClick={() => setEtat('valeur')}>
               Reprendre une photo
             </button>
           </>

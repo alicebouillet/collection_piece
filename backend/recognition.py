@@ -71,11 +71,22 @@ def embed(image: Image.Image) -> list[float]:
     """Vecteur CLIP normalisé (norme 1) — comparable par cosinus."""
     model, processor = _load_model()
     inputs = processor(images=image, return_tensors="pt")
+
     with torch.no_grad():
-        features = model.get_image_features(**inputs)
+        sortie = model.get_image_features(**inputs)
+
+    # Selon la version de transformers, get_image_features renvoie le tenseur
+    # projeté (512) ou un objet qui l'enveloppe. Dans les deux cas la
+    # projection est déjà faite : on récupère le tenseur, sans le reprojeter.
+    if torch.is_tensor(sortie):
+        features = sortie
+    else:
+        features = getattr(sortie, "image_embeds", None)
+        if features is None:
+            features = sortie.pooler_output
+
     features = features / features.norm(dim=-1, keepdim=True)
     return features[0].tolist()
-
 
 def embed_bytes(raw: bytes, *, isolate: bool = True) -> list[float]:
     image = Image.open(BytesIO(raw)).convert("RGB")

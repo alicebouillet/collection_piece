@@ -1,3 +1,5 @@
+import { VALEURS } from '../valeurs'
+
 export default function Filtres({ valeurs, onChange, pays }) {
   const modifier = (champ) => (e) => onChange({ ...valeurs, [champ]: e.target.value })
 
@@ -10,8 +12,15 @@ export default function Filtres({ valeurs, onChange, pays }) {
         onChange={modifier('texte')}
       />
 
+      <select value={valeurs.valeur} onChange={modifier('valeur')} aria-label="Valeur">
+        <option value="toutes">Toutes les valeurs</option>
+        {VALEURS.map((v) => (
+          <option key={v.centimes} value={v.centimes}>{v.libelle}</option>
+        ))}
+      </select>
+
       <select value={valeurs.type} onChange={modifier('type')} aria-label="Type de pièce">
-        <option value="tous">Toutes les pièces</option>
+        <option value="tous">Courantes et commémoratives</option>
         <option value="commemorative">Commémoratives</option>
         <option value="courante">Courantes</option>
       </select>

@@ -16,6 +16,7 @@ create extension if not exists vector;
 -- -------------------------------------------------------------------------
 create table if not exists coin_types (
     id            text primary key,              -- slug, ex. "2015_be_flag"
+    valeur        int not null,                  -- en centimes : 1,2,5,10,20,50,100,200
     type          text not null check (type in ('courante', 'commemorative')),
     pays_code     text not null,                 -- ISO 3166-1 alpha-2, ex. "be"
     pays          text not null,                 -- libellé FR, ex. "Belgique"
@@ -28,6 +29,7 @@ create table if not exists coin_types (
     created_at    timestamptz not null default now()
 );
 
+create index if not exists coin_types_valeur_idx    on coin_types (valeur);
 create index if not exists coin_types_type_idx      on coin_types (type);
 create index if not exists coin_types_pays_idx      on coin_types (pays_code);
 create index if not exists coin_types_annee_idx     on coin_types (annee);
@@ -77,10 +79,12 @@ left join collection c
 -- -------------------------------------------------------------------------
 create or replace function match_coins(
     query_embedding vector(512),
-    match_count     int default 3
+    match_count     int default 3,
+    filtre_valeur   int default null
 )
 returns table (
     id        text,
+    valeur    int,
     type      text,
     pays      text,
     pays_code text,
@@ -93,6 +97,7 @@ language sql stable
 as $$
     select
         ct.id,
+        ct.valeur,
         ct.type,
         ct.pays,
         ct.pays_code,
@@ -102,6 +107,9 @@ as $$
         1 - (ct.embedding <=> query_embedding) as score
     from coin_types ct
     where ct.embedding is not null
+      -- Le motif ne distingue pas 1c de 2c de 5c : beaucoup de pays y mettent
+      -- le même dessin. La valeur est donnée par l'utilisateur, pas devinée.
+      and (filtre_valeur is null or ct.valeur = filtre_valeur)
     order by ct.embedding <=> query_embedding
     limit match_count;
 $$;

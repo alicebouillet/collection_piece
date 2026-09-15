@@ -385,3 +385,39 @@ button {
   color: var(--estompe);
   text-align: center;
 }
+
+/* ------------------------------------------------------- valeurs faciales */
+
+/* Le logement suit le diamètre réel de la pièce, comme dans un album :
+   une rangée de 1 centime ne peut pas occuper la place d'une 2 euros. */
+.logement--v1   { width: 60px; height: 60px; }
+.logement--v2   { width: 66px; height: 66px; }
+.logement--v5   { width: 72px; height: 72px; }
+.logement--v10  { width: 70px; height: 70px; }
+.logement--v20  { width: 76px; height: 76px; }
+.logement--v50  { width: 82px; height: 82px; }
+.logement--v100 { width: 78px; height: 78px; }
+.logement--v200 { width: 84px; height: 84px; }
+
+.choix-valeur {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.choix-valeur button {
+  font-family: var(--serif);
+  font-size: 16px;
+  color: var(--parchemin);
+  background: var(--feutre-creux);
+  border: 1px solid rgba(234, 228, 214, 0.16);
+  border-radius: 10px;
+  padding: 14px 0;
+}
+
+.choix-valeur button:hover,
+.choix-valeur button:focus-visible {
+  border-color: var(--laiton);
+  color: var(--laiton);
+}

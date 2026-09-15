@@ -16,7 +16,6 @@ dist/
 
 # Données récupérées (volumineuses, régénérables via scrape_ecb.py)
 data/images/
-data/catalog.json
 
 # Système
 .DS_Store

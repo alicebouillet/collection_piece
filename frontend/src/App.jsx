@@ -12,7 +12,7 @@ export default function App() {
   const [chargement, setChargement] = useState(true)
   const [erreur, setErreur] = useState(null)
   const [panneauOuvert, setPanneauOuvert] = useState(false)
-  const [filtres, setFiltres] = useState({ type: 'tous', pays: 'tous', etat: 'tous', texte: '' })
+  const [filtres, setFiltres] = useState({ valeur: 'toutes', type: 'tous', pays: 'tous', etat: 'tous', texte: '' })
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setSession(data.session))
@@ -25,6 +25,7 @@ export default function App() {
     const { data, error } = await supabase
       .from('vue_catalogue')
       .select('*')
+      .order('valeur', { ascending: true })
       .order('annee', { ascending: true, nullsFirst: true })
       .order('pays', { ascending: true })
 
@@ -73,6 +74,7 @@ export default function App() {
   const visibles = useMemo(() => {
     const recherche = filtres.texte.trim().toLowerCase()
     return pieces.filter((p) => {
+      if (filtres.valeur !== 'toutes' && p.valeur !== Number(filtres.valeur)) return false
       if (filtres.type !== 'tous' && p.type !== filtres.type) return false
       if (filtres.pays !== 'tous' && p.pays !== filtres.pays) return false
       if (filtres.etat === 'possedees' && !p.possedee) return false
