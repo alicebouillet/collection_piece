@@ -1,5 +1,4 @@
 import { useRef, useState } from 'react'
-import { identifier } from '../api'
 import { VALEURS, libelleValeur } from '../valeurs'
 
 export default function PanneauIdentification({ onFermer, onAjouter }) {
@@ -7,7 +6,12 @@ export default function PanneauIdentification({ onFermer, onAjouter }) {
   const [etat, setEtat] = useState('valeur') // valeur | attente | analyse | resultats | erreur
   const [resultat, setResultat] = useState(null)
   const [message, setMessage] = useState(null)
+  const [progres, setProgres] = useState(null)
   const champ = useRef(null)
+
+  // Le module de reconnaissance embarque ONNX Runtime : il n'est chargé
+  // qu'au moment où l'utilisateur demande vraiment une identification.
+  const chargerModule = () => import('../reconnaissance')
 
   function choisir(centimes) {
     setValeur(centimes)
@@ -17,18 +21,32 @@ export default function PanneauIdentification({ onFermer, onAjouter }) {
     setTimeout(() => champ.current?.click(), 0)
   }
 
+  function suivreTelechargement(info) {
+    if (info.status === 'progress' && info.total) {
+      setProgres(Math.round((info.loaded / info.total) * 100))
+    } else if (info.status === 'done') {
+      setProgres(null)
+    }
+  }
+
   async function analyser(e) {
     const fichier = e.target.files?.[0]
     if (!fichier) return
 
     setEtat('analyse')
+    const { modelePret } = await chargerModule()
+    setProgres(modelePret() ? null : 0)
+
     try {
-      const reponse = await identifier(fichier, valeur)
+      const { identifier } = await chargerModule()
+      const reponse = await identifier(fichier, valeur, suivreTelechargement)
       setResultat(reponse)
       setEtat('resultats')
     } catch (err) {
       setMessage(err.message)
       setEtat('erreur')
+    } finally {
+      setProgres(null)
     }
   }
 
@@ -66,7 +84,8 @@ export default function PanneauIdentification({ onFermer, onAjouter }) {
         {etat === 'attente' && (
           <>
             <p className="panneau-aide">
-              Photographie la face nationale, pièce bien à plat et cadrée seule.
+              Photographie la face nationale, pièce bien à plat et centrée dans
+              le cadre.
             </p>
             <button className="secondaire" onClick={() => champ.current.click()}>
               Prendre une photo
@@ -77,7 +96,20 @@ export default function PanneauIdentification({ onFermer, onAjouter }) {
           </>
         )}
 
-        {etat === 'analyse' && <p className="panneau-aide">Analyse de la photo.</p>}
+        {etat === 'analyse' && (
+          <>
+            <p className="panneau-aide">
+              {progres === null
+                ? 'Analyse de la photo.'
+                : 'Premier usage : téléchargement du modèle de reconnaissance. Il sera gardé en mémoire pour les fois suivantes.'}
+            </p>
+            {progres !== null && (
+              <div className="avancement-ligne">
+                <div className="avancement-part" style={{ width: `${progres}%` }} />
+              </div>
+            )}
+          </>
+        )}
 
         {etat === 'erreur' && (
           <>
