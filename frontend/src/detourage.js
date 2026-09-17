@@ -163,21 +163,77 @@ export async function preparer(fichier) {
  * plus que de supprimer un maximum d'information.
  */
 export function rendre(bitmap, cercle) {
+  const r = cercle.rayon * 1.08
+  const source = { x: cercle.cx - r, y: cercle.cy - r, cote: r * 2 }
+
+  // Réduction par paliers de moitié. Un navigateur qui passe de 3000 px à
+  // 224 en une seule fois sous-échantillonne brutalement : il ne retient
+  // qu'un pixel sur treize et le résultat est mou. En divisant par deux à
+  // chaque étape, chaque pixel conserve la moyenne de ses voisins.
+  let courant = document.createElement('canvas')
+  let cote = Math.min(Math.ceil(source.cote), 2048)
+  courant.width = cote
+  courant.height = cote
+  let ctx = courant.getContext('2d')
+  ctx.imageSmoothingEnabled = true
+  ctx.imageSmoothingQuality = 'high'
+  ctx.drawImage(bitmap, source.x, source.y, source.cote, source.cote, 0, 0, cote, cote)
+
+  while (cote > SORTIE * 2) {
+    const suivant = document.createElement('canvas')
+    const nouveau = Math.max(SORTIE, Math.round(cote / 2))
+    suivant.width = nouveau
+    suivant.height = nouveau
+    const c = suivant.getContext('2d')
+    c.imageSmoothingEnabled = true
+    c.imageSmoothingQuality = 'high'
+    c.drawImage(courant, 0, 0, cote, cote, 0, 0, nouveau, nouveau)
+    courant = suivant
+    cote = nouveau
+  }
+
   const canvas = document.createElement('canvas')
   canvas.width = SORTIE
   canvas.height = SORTIE
-  const ctx = canvas.getContext('2d')
-  ctx.fillStyle = '#ffffff'
-  ctx.fillRect(0, 0, SORTIE, SORTIE)
+  const final = canvas.getContext('2d')
+  final.fillStyle = '#ffffff'
+  final.fillRect(0, 0, SORTIE, SORTIE)
+  final.imageSmoothingEnabled = true
+  final.imageSmoothingQuality = 'high'
 
-  const r = cercle.rayon * 1.08
+  final.save()
+  final.beginPath()
+  final.arc(SORTIE / 2, SORTIE / 2, SORTIE / 2, 0, Math.PI * 2)
+  final.clip()
+  final.drawImage(courant, 0, 0, cote, cote, 0, 0, SORTIE, SORTIE)
+  final.restore()
 
-  ctx.save()
-  ctx.beginPath()
-  ctx.arc(SORTIE / 2, SORTIE / 2, SORTIE / 2, 0, Math.PI * 2)
-  ctx.clip()
-  ctx.drawImage(bitmap, cercle.cx - r, cercle.cy - r, r * 2, r * 2, 0, 0, SORTIE, SORTIE)
-  ctx.restore()
-
+  accentuer(final)
   return canvas
+}
+
+/**
+ * Légère accentuation, pour compenser l'adoucissement inévitable de la
+ * réduction. Masque flou simplifié : on soustrait une version moyennée.
+ */
+function accentuer(ctx, force = 0.45) {
+  const image = ctx.getImageData(0, 0, SORTIE, SORTIE)
+  const src = image.data
+  const copie = new Uint8ClampedArray(src)
+
+  for (let y = 1; y < SORTIE - 1; y++) {
+    for (let x = 1; x < SORTIE - 1; x++) {
+      const i = (y * SORTIE + x) * 4
+      for (let c = 0; c < 3; c++) {
+        const moyenne =
+          (copie[i - SORTIE * 4 + c] +
+            copie[i + SORTIE * 4 + c] +
+            copie[i - 4 + c] +
+            copie[i + 4 + c]) / 4
+        src[i + c] = copie[i + c] + (copie[i + c] - moyenne) * force
+      }
+    }
+  }
+
+  ctx.putImageData(image, 0, 0)
 }

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { rendre } from '../detourage'
 
-const LARGEUR = 300 // largeur d'affichage de la photo, en pixels
+const LARGEUR = 280 // largeur d'affichage de la photo, en pixels
 
 /**
  * Ajustement du cercle de recadrage avant analyse.
@@ -103,7 +103,7 @@ export default function Recadrage({ photo, onValider, onReprendre }) {
         {apercu && (
           <figure className="recadrage-apercu">
             <img src={apercu} alt="Aperçu du résultat" />
-            <figcaption>analysé</figcaption>
+            <figcaption>ce qui sera analysé</figcaption>
           </figure>
         )}
       </div>
